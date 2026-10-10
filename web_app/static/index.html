@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Insight Arc</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='7' fill='%231d1d1f'/%3E%3Cpath d='M6.5 16.5a5.5 5.5 0 0 1 11 0' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linecap='round'/%3E%3Ccircle cx='12' cy='16.5' r='1.5' fill='%23fff'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body data-drawer="closed">
+
+  <!-- ───────── Header ───────── -->
+  <header class="app-header">
+    <button id="sidebar-toggle" class="icon-button only-narrow" type="button"
+            aria-label="Show dataset panel" aria-expanded="false" aria-controls="sidebar">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true">
+        <rect width="24" height="24" rx="7" fill="currentColor"/>
+        <path d="M6.5 16.5a5.5 5.5 0 0 1 11 0" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+        <circle cx="12" cy="16.5" r="1.5" fill="#fff"/>
+      </svg>
+      <h1 class="brand-name">Insight Arc</h1>
+      <span class="brand-sub">AI Data Assistant</span>
+    </div>
+
+    <div id="connection" class="connection" data-state="unknown" role="status">
+      <span class="dot" aria-hidden="true"></span>
+      <span id="connection-text">Connecting</span>
+    </div>
+  </header>
+
+  <div class="app-body">
+
+    <!-- ───────── Sidebar: dataset ───────── -->
+    <aside id="sidebar" class="sidebar" aria-label="Dataset">
+
+      <section class="side-section">
+        <div class="section-head">
+          <h2 class="section-title">Dataset</h2>
+          <span id="dataset-state" class="state-pill" data-state="none">
+            <span class="dot" aria-hidden="true"></span>
+            <span id="dataset-state-text">No dataset</span>
+          </span>
+        </div>
+
+        <button id="upload-button" class="btn btn-secondary btn-block" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4m0 0L8 8m4-4 4 4M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg>
+          Upload dataset
+        </button>
+        <input id="file-input" type="file" hidden accept=".csv,.xlsx,.xls,.json,.pickle,.pkl,.xml">
+        <p class="hint">CSV, XLSX, XLS, JSON, Pickle, PKL, XML</p>
+        <p id="upload-error" class="error-text" role="alert" hidden></p>
+
+        <dl class="meta">
+          <div><dt>Filename</dt><dd id="meta-filename">—</dd></div>
+          <div><dt>Rows</dt><dd id="meta-rows">—</dd></div>
+          <div><dt>Columns</dt><dd id="meta-columns">—</dd></div>
+        </dl>
+      </section>
+
+      <section class="side-section side-columns">
+        <div class="section-head">
+          <h2 class="section-title">Columns</h2>
+          <span id="column-count" class="count"></span>
+        </div>
+        <label class="search">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
+          <input id="column-search" type="text" placeholder="Search columns" aria-label="Search columns"
+                 autocomplete="off" spellcheck="false" disabled>
+        </label>
+        <ul id="column-list" class="column-list"></ul>
+      </section>
+
+      <div class="side-actions">
+        <button id="clear-conversation" class="btn btn-secondary btn-block" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6h14v9a2 2 0 0 1-2 2H11l-4 3v-3H7a2 2 0 0 1-2-2V6z"/><path d="m10 9.5 4 4m0-4-4 4"/></svg>
+          Clear Conversation
+        </button>
+        <button id="clear-dataset" class="btn btn-secondary btn-block btn-destructive" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V5h4v2m-7 0 .8 11a2 2 0 0 0 2 1.9h4.4a2 2 0 0 0 2-1.9L17 7"/></svg>
+          Clear Dataset
+        </button>
+      </div>
+    </aside>
+
+    <div id="scrim" class="scrim"></div>
+
+    <!-- ───────── Conversation ───────── -->
+    <main class="chat">
+      <div id="chat-scroll" class="chat-scroll">
+        <div id="thread" class="thread" role="log" aria-live="polite" aria-label="Conversation"></div>
+      </div>
+
+      <div class="composer-wrap">
+        <div class="composer">
+          <textarea id="chat-input" rows="1" maxlength="2000" aria-label="Message"
+                    placeholder="Ask something about your dataset..." disabled></textarea>
+          <button id="send-button" class="send" type="button" aria-label="Send message" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5m0 0-6 6m6-6 6 6"/></svg>
+          </button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ───────── Status bar ───────── -->
+  <footer id="statusbar" class="statusbar" data-kind="neutral" role="status">
+    <span class="status-dot" aria-hidden="true"></span>
+    <span id="status-text">No dataset loaded</span>
+  </footer>
+
+  <!-- ───────── Dialogs ───────── -->
+  <dialog id="confirm-dialog" class="dialog" aria-labelledby="confirm-title" aria-describedby="confirm-body">
+    <form method="dialog">
+      <h2 id="confirm-title">Do you want to delete this conversation and open a new one?</h2>
+      <p id="confirm-body">This clears the loaded dataset and the current conversation. Saved copies in the chats/ archive are never deleted.</p>
+      <div class="dialog-actions">
+        <button class="btn btn-secondary" value="cancel" autofocus>Cancel</button>
+        <button class="btn btn-primary" value="confirm">Delete and open new</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="lightbox" class="lightbox" aria-label="Enlarged chart">
+    <img id="lightbox-img" alt="">
+  </dialog>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

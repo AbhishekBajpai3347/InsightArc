@@ -1,0 +1,83 @@
+# ==========================================
+# Insight-Arc — .gitignore
+# ==========================================
+
+# Environment variables & secrets
+.env
+.env.*
+!.env.example
+
+# Python cache & bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.pyo
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Packaging & PyInstaller build artifacts
+build/
+dist/
+*.spec
+*.exe
+*.egg
+*.egg-info/
+.eggs/
+
+# Testing & coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+# Large tabular data files
+*.csv
+*.tsv
+*.parquet
+*.feather
+*.h5
+*.hdf5
+*.pkl
+*.pickle
+taxi_dataset.csv
+
+# Runtime generated chat history & plots
+chats/*.json
+!chats/.gitkeep
+web_app/static/charts/*
+!web_app/static/charts/.gitkeep
+
+# IDEs & code editors
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+
+# Operating system files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insight-Arc Execution Simulator</title>
+    <style>
+        :root {
+            --bg-color: #1e1e1e;
+            --panel-bg: #2d2d2d;
+            --text-main: #e0e0e0;
+            --text-muted: #a0a0a0;
+            --accent: #4a90e2;
+            --border: #444;
+            --success: #4caf50;
+            --warning: #ffb74d;
+            --error: #f44336;
+        }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; background-color: var(--bg-color); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+        .sidebar { width: 300px; background-color: var(--panel-bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+        .sidebar h2 { padding: 15px; margin: 0; font-size: 1.2rem; border-bottom: 1px solid var(--border); color: #fff; }
+        .scenario-list { flex: 1; overflow-y: auto; list-style: none; padding: 0; margin: 0; }
+        .scenario-item { padding: 15px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.2s; }
+        .scenario-item:hover { background-color: #383838; }
+        .scenario-item.active { background-color: #3d4b5c; border-left: 4px solid var(--accent); }
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .header { padding: 15px 20px; border-bottom: 1px solid var(--border); background-color: var(--panel-bg); display: flex; justify-content: space-between; align-items: center; }
+        .controls button { background-color: var(--accent); color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-left: 10px; }
+        .controls button:disabled { background-color: var(--border); color: var(--text-muted); cursor: not-allowed; }
+        .content-scroll { flex: 1; overflow-y: auto; padding: 20px; display: flex; gap: 20px; }
+        .left-col { flex: 3; display: flex; flex-direction: column; gap: 20px; }
+        .right-col { flex: 2; display: flex; flex-direction: column; gap: 20px; }
+        .card { background-color: var(--panel-bg); border-radius: 6px; border: 1px solid var(--border); padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .card h3 { margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 10px; color: #fff; font-size: 1.1rem; }
+        pre { background-color: #111; padding: 10px; border-radius: 4px; overflow-x: auto; font-family: 'Courier New', Courier, monospace; font-size: 0.9rem; margin: 0; color: #d4d4d4; }
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; background-color: var(--border); margin-right: 5px; }
+        .badge.llm { background-color: #9c27b0; color: white; }
+        .badge.tool { background-color: #009688; color: white; }
+        .badge.error { background-color: var(--error); color: white; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .data-inspector { font-size: 0.85rem; }
+        .data-inspector table { width: 100%; border-collapse: collapse; margin-top: 5px; }
+        .data-inspector th, .data-inspector td { border: 1px solid var(--border); padding: 4px; text-align: left; }
+        .data-inspector th { background-color: #333; }
+        .explanation { font-size: 1.05rem; line-height: 1.5; color: #e0e0e0; background-color: #1e3a5f; padding: 15px; border-radius: 6px; border-left: 4px solid var(--accent); }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2>Insight-Arc Scenarios</h2>
+        <ul class="scenario-list" id="scenario-list"></ul>
+    </div>
+    <div class="main-content">
+        <div class="header">
+            <div>
+                <h2 id="step-title" style="margin:0;">Select a Scenario</h2>
+                <div id="step-badges" style="margin-top: 8px;"></div>
+            </div>
+            <div class="controls">
+                <span id="step-counter" style="margin-right: 15px; font-weight: bold;"></span>
+                <button id="btn-reset">Reset</button>
+                <button id="btn-prev">Previous</button>
+                <button id="btn-next">Next Step</button>
+            </div>
+        </div>
+        <div class="content-scroll" id="content-scroll" style="display: none;">
+            <div class="left-col">
+                <div class="explanation" id="explanation"></div>
+                
+                <div class="card">
+                    <h3>Execution Context</h3>
+                    <p><strong>File:</strong> <span id="ctx-file"></span></p>
+                    <p><strong>Function:</strong> <span id="ctx-function"></span></p>
+                    <p><strong>Caller:</strong> <span id="ctx-caller"></span></p>
+                    <p><strong>Next Called:</strong> <span id="ctx-next"></span></p>
+                </div>
+
+                <div class="card">
+                    <h3>Code Excerpt</h3>
+                    <pre id="code-excerpt"></pre>
+                </div>
+            </div>
+            
+            <div class="right-col">
+                <div class="card">
+                    <h3>Variables & State</h3>
+                    <div class="grid-2">
+                        <div>
+                            <h4>Input Arguments</h4>
+                            <pre id="var-inputs" style="background:#222; max-height: 150px;"></pre>
+                        </div>
+                        <div>
+                            <h4>Return Value / Output</h4>
+                            <pre id="var-outputs" style="background:#222; max-height: 150px;"></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card data-inspector">
+                    <h3>DataFrame State</h3>
+                    <h4>current_df</h4>
+                    <p id="df-current-meta" style="margin:2px 0; color:var(--text-muted);"></p>
+                    <div id="df-current-preview"></div>
+                    
+                    <h4 style="margin-top:15px;">last_result</h4>
+                    <p id="df-last-meta" style="margin:2px 0; color:var(--text-muted);"></p>
+                    <div id="df-last-preview"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Injecting JS Data -->
+    <script src="scenarios.js"></script>
+    <script>
+        const scenarioList = document.getElementById('scenario-list');
+        const contentScroll = document.getElementById('content-scroll');
+        const btnNext = document.getElementById('btn-next');
+        const btnPrev = document.getElementById('btn-prev');
+        const btnReset = document.getElementById('btn-reset');
+        
+        let currentScenarioIndex = -1;
+        let currentStepIndex = 0;
+
+        function init() {
+            scenarios.forEach((sc, idx) => {
+                const li = document.createElement('li');
+                li.className = 'scenario-item';
+                li.innerHTML = `<strong>${sc.title}</strong><br><small style="color:#aaa;">${sc.description}</small>`;
+                li.onclick = () => loadScenario(idx);
+                scenarioList.appendChild(li);
+            });
+            if(scenarios.length > 0) loadScenario(0);
+        }
+
+        function loadScenario(idx) {
+            document.querySelectorAll('.scenario-item').forEach(el => el.classList.remove('active'));
+            scenarioList.children[idx].classList.add('active');
+            currentScenarioIndex = idx;
+            currentStepIndex = 0;
+            renderStep();
+        }
+
+        function renderStep() {
+            const sc = scenarios[currentScenarioIndex];
+            const step = sc.steps[currentStepIndex];
+            
+            contentScroll.style.display = 'flex';
+            
+            document.getElementById('step-title').innerText = `Step ${currentStepIndex + 1}: ${step.purpose}`;
+            document.getElementById('step-counter').innerText = `${currentStepIndex + 1} / ${sc.steps.length}`;
+            
+            let badges = '';
+            if (step.llmContacted) badges += '<span class="badge llm">LLM Network Call</span>';
+            if (step.toolAction) badges += `<span class="badge tool">Tool: ${step.toolAction}</span>`;
+            if (step.isError) badges += '<span class="badge error">Error / Fallback</span>';
+            document.getElementById('step-badges').innerHTML = badges;
+            
+            document.getElementById('explanation').innerHTML = `<strong>Why this step exists:</strong> ${step.explanation}`;
+            
+            document.getElementById('ctx-file').innerText = step.file;
+            document.getElementById('ctx-function').innerText = step.functionName;
+            document.getElementById('ctx-caller').innerText = step.caller || 'N/A';
+            document.getElementById('ctx-next').innerText = step.nextFunction || 'N/A';
+            
+            document.getElementById('code-excerpt').innerText = step.codeExcerpt;
+            
+            document.getElementById('var-inputs').innerText = JSON.stringify(step.inputArgs, null, 2);
+            document.getElementById('var-outputs').innerText = step.returnValue ? JSON.stringify(step.returnValue, null, 2) : 'None / Pending';
+            
+            // Render DF State
+            document.getElementById('df-current-meta').innerText = step.currentDfMeta || 'None';
+            document.getElementById('df-current-preview').innerHTML = step.currentDfHtml || '';
+            document.getElementById('df-last-meta').innerText = step.lastResultMeta || 'None';
+            document.getElementById('df-last-preview').innerHTML = step.lastResultHtml || '';
+            
+            btnPrev.disabled = currentStepIndex === 0;
+            btnNext.disabled = currentStepIndex === sc.steps.length - 1;
+        }
+
+        btnNext.onclick = () => { if (currentStepIndex < scenarios[currentScenarioIndex].steps.length - 1) { currentStepIndex++; renderStep(); } };
+        btnPrev.onclick = () => { if (currentStepIndex > 0) { currentStepIndex--; renderStep(); } };
+        btnReset.onclick = () => { currentStepIndex = 0; renderStep(); };
+
+        window.onload = init;
+    </script>
+</body>
+</html>

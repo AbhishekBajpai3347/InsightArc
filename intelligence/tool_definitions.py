@@ -4,7 +4,7 @@ Tool definitions and Groq/OpenAI tool-schema registry for the LLM.
 """
 
 from dataclasses import dataclass
-from typing import Callable, Type
+from typing import Callable, Type, Any
 from pydantic import BaseModel
 from data import validator, cleaner, encoder
 from analysis import statistics, eda, visualization

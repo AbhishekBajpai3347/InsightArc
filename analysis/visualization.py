@@ -15,17 +15,12 @@ import pandas as pd
 
 
 def _finish_plot(title="Plot"):
-    print("Finish Entered")
     plt.tight_layout()
 
     buf = io.BytesIO()
-    print("Before savefig")
     plt.savefig(buf, format="png", bbox_inches="tight")
-    print("After savefig")
     buf.seek(0)
-    print("Before base64")
     img_b64 = base64.b64encode(buf.getvalue()).decode("utf-8")
-    print("After base64")
     try:
         if matplotlib.get_backend().lower() not in [
             "agg",
@@ -36,7 +31,6 @@ def _finish_plot(title="Plot"):
         pass
 
     plt.close()
-    print("After chart")
 
     return {
         "status": "success",
@@ -118,14 +112,8 @@ def plot_bar_chart(
 
     if sort_x:
         plot_df = plot_df.sort_values(by=x_column)
-    print("BAR ENTERED")
+
     plt.figure(figsize=(8, 5))
-    print("Before bar chart")
-    print(plot_df[x_column])
-    print(plot_df[y_column])
-    print(color)
-    print(edgecolor)
-    print(alpha)
     plt.bar(
         plot_df[x_column],
         plot_df[y_column],
@@ -133,7 +121,6 @@ def plot_bar_chart(
         edgecolor=edgecolor,
         alpha=alpha,
     )
-    print("After bar chart")
     plt.title(
         title,
         fontsize=14,
@@ -149,7 +136,6 @@ def plot_bar_chart(
         ylabel if ylabel is not None else y_column,
         fontsize=12,
     )
-    print("Before Bar chart")
     plt.xticks(rotation=45)
 
     return _finish_plot(title)

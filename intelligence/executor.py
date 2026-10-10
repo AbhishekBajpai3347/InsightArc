@@ -104,7 +104,6 @@ def execute_tool(
             - 'input_rows': number of rows the tool received
     """
 
-    print(">>> Entered execute tool")
     if tool_name not in TOOLS:
         valid_tools = ", ".join(sorted(TOOLS.keys()))
         raise ValueError(
@@ -144,7 +143,7 @@ def execute_tool(
             raise ValueError(
                 f"Invalid arguments for tool '{tool_name}': {'; '.join(error_details)}"
             ) from e
-    print("Validated args")
+
     # Execute tool. Start with no open figures so we only ever capture THIS tool's plot,
     # and always close them afterwards, even if the tool fails half-way through a plot.
     plt.close("all")
@@ -152,13 +151,9 @@ def execute_tool(
         with warnings.catch_warnings():
             # Plot tools call plt.show(); under the Agg backend that only emits this warning.
             warnings.filterwarnings("ignore", message=".*non-interactive.*", category=UserWarning)
-            print("BEFORE tool.function")
-        result = tool.function(input_df, **args)
-        print("AFTER tool.function")
-        
-        print("BEFORE capture")
+            result = tool.function(input_df, **args)
+
         figure_png = _capture_figure_png()
-        print("AFTER capture")
 
         if figure_png is None and isinstance(result, dict) and "image_base64" in result:
             figure_png = result["image_base64"]
@@ -177,7 +172,6 @@ def execute_tool(
         elif isinstance(result, pd.Series):
             derived_result = series_to_dataframe(result)
 
-    print("Returning df")
     return {
         "result": result,
         "dataframe": resulting_df,

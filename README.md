@@ -5,8 +5,8 @@ Insight-Arc is an agentic, AI-powered conversational tool for data analysis. It 
 ## 🏗️ High-Level Architecture
 
 The project is split into a **Local Client** and a **Hosted Server**:
-1. **Local Client (`web_app`, `data`, `analysis`, `intelligence`)**: Runs on the user's machine. It holds the actual data (`pandas.DataFrame`) in RAM, executes all Python data operations locally, and serves the UI. **Raw data never leaves the local machine.**
-2. **Hosted Server (`hosted_server`)**: A stateless proxy that holds the LLM API keys (Groq) and the system prompt. It receives structural metadata (column names, types, row counts) and chat history from the local client, passes them to the LLM, and returns the LLM's planned tool calls.
+1. **Local Client (`web_app`, `data`, `analysis`, `intelligence`)**: Runs on the user's machine. It holds the actual data (`pandas.DataFrame`) in RAM, executes all Python data operations locally, and serves the UI. **The full raw dataset stays local, but user prompts, selected data values, and compact tool observations may be sent to the configured LLM provider.**
+2. **Hosted Server (`hosted_server`)**: A stateless proxy that holds the LLM API keys (DeepInfra as primary, Groq as fallback) and the system prompt. It receives structural metadata (column names, types, row counts) and chat history from the local client, passes them to the LLM, and returns the LLM's planned tool calls.
 
 ---
 
@@ -47,7 +47,7 @@ Handles loading, cleaning, and mutating data.
 
 ### 5. `hosted_server/` (The LLM Proxy)
 * **`core.py`**:
-  * *Important Function*: `run_step()` - Assembles the System Prompt, Dataset Block (metadata only), Memory Block, and User messages into a single payload for the Groq API. Handles Rate Limits (HTTP 429) gracefully.
+  * *Important Function*: `run_step()` - Assembles the System Prompt, Dataset Block (metadata only), Memory Block, and User messages into a single payload for the LLM API. Handles Rate Limits (HTTP 429) gracefully.
 * **`prompt.py`**: Contains the highly optimized `SYSTEM_PROMPT` dictating the agent's behavior, tool usage, and constraints.
 
 ---
@@ -71,7 +71,7 @@ Here is the step-by-step lifecycle of how Insight-Arc handles a user request:
 4. **ReAct Loop Begins (Iteration 1):**
    * `run_chat()` calls the hosted server via `requests.post()`.
    * The payload contains: User prompt, dataset metadata (not the raw data), and available JSON tool schemas.
-   * Hosted Server forwards this to Groq LLM.
+   * Hosted Server forwards this to the LLM provider (DeepInfra or Groq).
    * LLM decides it needs to use a tool and responds with a tool call: `plot_bar_chart(x="region", y="sales")`.
 5. **Tool Execution:**
    * `chatbot.py` intercepts the tool call and passes it to `intelligence/executor.py:execute_tool()`.
@@ -90,4 +90,4 @@ Here is the step-by-step lifecycle of how Insight-Arc handles a user request:
 
 ## 🔒 Thread Safety & Rate Limiting
 * **Locking:** Because pandas and matplotlib are not inherently thread-safe (especially matplotlib's global state), `engine.py` uses `threading.Lock()` to ensure only one user request modifies the dataframe or generates a plot at a time.
-* **Rate Limits:** The ReAct loop can make multiple rapid calls to the LLM. `chatbot.py` implements a `REQUEST_DELAY` (e.g., 0.2s) between iterations to prevent tripping Groq's RPM limits, and `core.py` traps HTTP 429 errors to fail gracefully if limits are hit.
+* **Rate Limits:** The ReAct loop can make multiple rapid calls to the LLM. `chatbot.py` implements a `REQUEST_DELAY` (e.g., 0.2s) between iterations to prevent tripping the LLM provider's RPM limits, and `core.py` traps HTTP 429 errors to fail gracefully if limits are hit.

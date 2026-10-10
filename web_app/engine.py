@@ -148,7 +148,7 @@ def query(message: str) -> dict:
             return {"type": "error", "message": "No dataset is loaded. Upload a dataset and try again."}
 
         try:
-            result = run_chat(message, _df, _memory, last_result=_last_result)
+            result = run_chat(message, _df, _memory, last_result=_last_result, show_progress=False)
         except Exception:
             logger.exception("run_chat failed")
             return {"type": "error", "message": "Something went wrong while processing your request."}

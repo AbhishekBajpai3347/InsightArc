@@ -195,7 +195,7 @@ def run_chat(
     user_message: str,
     df: pd.DataFrame,
     memory: list[str] | None = None,
-    show_progress: bool = True,
+    show_progress: bool = False,
     last_result: pd.DataFrame | None = None,
 ) -> ChatResult:
     """
@@ -321,17 +321,12 @@ def run_chat(
                     print(f"\n[Tool] {name}")
                     print(f"[Arguments] {args}")
 
-
-                print("[Executor] BEFORE execute_tool")
-
                 execution = execute_tool(
                     current_df,
                     name,
                     args,
                     last_result,
                 )
-
-                print("[Executor] AFTER execute_tool")
 
                 current_df = execution["dataframe"]
                 modifies = execution["modifies_dataset"]

@@ -1,8 +1,13 @@
-# Local server (runs on the client's machine). Your own dependencies (pandas, seaborn, pydantic,
-# openpyxl, lxml, ...) are assumed to be installed already; these are the ones this layer adds.
-fastapi>=0.110
+﻿fastapi>=0.110
 uvicorn>=0.29
 python-multipart      # needed for the file upload endpoint
 requests              # local server -> hosted server
 python-dotenv
 matplotlib
+pandas
+seaborn
+scikit-learn
+pydantic
+openai
+groq
+openpyxl
